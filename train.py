@@ -42,7 +42,7 @@ def train(opt):
         raise NotImplementedError(f'--backbone {opt.backbone} is not implemented!')
     
     print(opt)
-    
+
 
     seed_everything(opt.seed)
 
@@ -196,6 +196,8 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
+    args.text = "a table"
+    args.O = True
     train(args)
 
     
