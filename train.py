@@ -210,7 +210,9 @@ if __name__ == '__main__':
     text_dir = params.get('text', args.text)
 
     with open(text_dir, 'r') as f:
-        args.text = f.read()
+        all_text = f.read()
+    
+    args.text = all_text.split("\n")[0]
 
     print('Final hyperparameters:', args)
 

@@ -5,7 +5,7 @@
     },
     "hyperparameters": {
         "text": "./text.txt",
-        "iters": "200",
+        "iters": "100",
         "workspace": "trail001",
         "O": "True"
     }
