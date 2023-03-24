@@ -199,16 +199,17 @@ if __name__ == '__main__':
     args = parse_args()
     params = load_params()
     # Read the hyperparameters from the JSON file
-    config = params["hyperparameters"]
+    params = params["hyperparameters"]
     # config = {}
 
     # Override the hyperparameters with command-line arguments
-    for arg in vars(args):
-        if arg != 'config' and getattr(args, arg) is not None:
-            config[arg] = getattr(args, arg)
+    for key, value in params.items():
+        if hasattr(args, key):
+            setattr(args, key, value)
 
-    print('Final hyperparameters:', config)
 
-    train(config)
+    print('Final hyperparameters:', args)
+
+    train(args)
 
     
