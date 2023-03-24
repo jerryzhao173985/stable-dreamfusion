@@ -1,0 +1,12 @@
+{
+    "model": {
+        "module": "stable_dreamfusion",
+        "model_name": "stable_diffusion"
+    },
+    "hyperparameters": {
+        "text": "A delicate lamp at home, featuring an intricate glass or crystal base and a softly glowing fabric shade, casting a warm, ambient light in a cozy corner of a tastefully decorated room. The lamp's elegant design and gentle illumination create a serene atmosphere, perfect for unwinding with a good book or engaging in quiet conversation. Surrounding the lamp, carefully chosen home decor items such as framed photos, a small stack of books, and a potted plant add to the inviting ambiance, 4k",
+        "iters": "200",
+        "workspace": "trail001",
+        "O": "True"
+    }
+}

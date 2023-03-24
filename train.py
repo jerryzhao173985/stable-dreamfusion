@@ -6,6 +6,7 @@ from nerf.provider import NeRFDataset
 from nerf.utils import *
 
 from nerf.gui import NeRFGUI
+from utils.general import get_config, load_params, get_params_path
 
 # torch.autograd.set_detect_anomaly(True)
 def train(opt):
@@ -189,15 +190,25 @@ def parse_args():
     parser.add_argument('--light_theta', type=float, default=60, help="default GUI light direction in [0, 180], corresponding to elevation [90, -90]")
     parser.add_argument('--light_phi', type=float, default=0, help="default GUI light direction in [0, 360), azimuth")
     parser.add_argument('--max_spp', type=int, default=1, help="GUI rendering max sample per pixel")
-
+    
     return parser.parse_args()
 
 
 
 if __name__ == '__main__':
     args = parse_args()
-    args.text = "a table"
-    args.O = True
-    train(args)
+    params = load_params()
+    # Read the hyperparameters from the JSON file
+    config = params["hyperparameters"]
+    # config = {}
+
+    # Override the hyperparameters with command-line arguments
+    for arg in vars(args):
+        if arg != 'config' and getattr(args, arg) is not None:
+            config[arg] = getattr(args, arg)
+
+    print('Final hyperparameters:', config)
+
+    train(config)
 
     
