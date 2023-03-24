@@ -1,6 +1,7 @@
 import torch
 import argparse
 import sys
+import json
 
 from nerf.provider import NeRFDataset
 from nerf.utils import *
@@ -197,22 +198,21 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    params = load_params()
-    # Read the hyperparameters from the JSON file
-    params = params["hyperparameters"]
-    # config = {}
+    with open('/opt/ml/parameters.json', 'r') as f:
+        params = json.load(f)
+    print("params: ", params)
 
     # Override the hyperparameters with command-line arguments
     for key, value in params.items():
         if hasattr(args, key):
             setattr(args, key, value)
     
-    text_dir = params.get('text', args.text)
+    # text_dir = params.get('text', args.text)
 
-    with open(text_dir, 'r') as f:
-        all_text = f.read()
+    # with open(text_dir, 'r') as f:
+    #     all_text = f.read()
     
-    args.text = all_text.split("\n")[0]
+    # args.text = all_text.split("\n")[0]
 
     print('Final hyperparameters:', args)
 
