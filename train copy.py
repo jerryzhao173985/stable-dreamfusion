@@ -198,6 +198,14 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
+    with open('/opt/ml/parameters.json', 'r') as f:
+        params = json.load(f)
+    print("params: ", params)
+
+    # Override the hyperparameters with command-line arguments
+    for key, value in params.items():
+        if hasattr(args, key):
+            setattr(args, key, value)
     
     # text_dir = params.get('text', args.text)
 
