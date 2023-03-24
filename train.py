@@ -206,7 +206,11 @@ if __name__ == '__main__':
     for key, value in params.items():
         if hasattr(args, key):
             setattr(args, key, value)
+    
+    text_dir = params.get('text', args.text)
 
+    with open(text_dir, 'r') as f:
+        args.text = f.read()
 
     print('Final hyperparameters:', args)
 
