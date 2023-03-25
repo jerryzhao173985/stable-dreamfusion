@@ -7,7 +7,8 @@ from nerf.provider import NeRFDataset
 from nerf.utils import *
 
 from nerf.gui import NeRFGUI
-from utils.general import get_config, load_params, get_params_path
+import boto3
+# from utils.general import get_config, load_params, get_params_path
 
 # torch.autograd.set_detect_anomaly(True)
 def train(opt):
@@ -199,6 +200,23 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     
+    json_path = "s3://jerry-3d-object-generation/params/parameters.json"
+    # Read parameters.json file from S3
+    s3 = boto3.resource('s3')
+    s3_bucket, s3_key = json_path.replace('s3://', '').split('/', 1)
+    obj = s3.Object(s3_bucket, s3_key)
+    params = json.loads(obj.get()['Body'].read().decode('utf-8'))
+
+    print("params", params)
+
+    for key, value in params.items():
+        if hasattr(args, key):
+            setattr(args, key, value)
+
+    print("text: ", args.text)
+    print("O: ", args.O)
+    print("iters: ", args.iters)
+
     # text_dir = params.get('text', args.text)
 
     # with open(text_dir, 'r') as f:
