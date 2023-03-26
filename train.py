@@ -25,8 +25,6 @@ def copy_directory(src, dst):
         else:
             shutil.copy2(src_item, dst_item)
 
-
-
 # torch.autograd.set_detect_anomaly(True)
 def train(opt):
     if opt.O:
@@ -133,15 +131,17 @@ def train(opt):
             max_epoch = np.ceil(opt.iters / len(train_loader)).astype(np.int32)
             trainer.train(train_loader, valid_loader, max_epoch)
 
-            # # doing the testing just after training is done doing --test// --save_mesh
-            # guidance = None # no need to load guidance model at test
-            # trainer = Trainer(' '.join(sys.argv), 'df', opt, model, guidance, device=device, workspace=opt.workspace, fp16=opt.fp16, use_checkpoint=opt.ckpt)
-            # test_loader = NeRFDataset(opt, device=device, type='test', H=opt.H, W=opt.W, size=100).dataloader()
-            # trainer.test(test_loader)
-            # # a special loader for poisson mesh reconstruction, 
-            # # loader = NeRFDataset(opt, device=device, type='test', H=128, W=128, size=100).dataloader()
-            # trainer.save_mesh()
+            # doing the testing just after training is done doing --test// --save_mesh
+            guidance = None # no need to load guidance model at test
+            trainer = Trainer(' '.join(sys.argv), 'df', opt, model, guidance, device=device, workspace=opt.workspace, fp16=opt.fp16, use_checkpoint=opt.ckpt)
+            test_loader = NeRFDataset(opt, device=device, type='test', H=opt.H, W=opt.W, size=100).dataloader()
+            trainer.test(test_loader)
+            # a special loader for poisson mesh reconstruction, 
+            # loader = NeRFDataset(opt, device=device, type='test', H=128, W=128, size=100).dataloader()
+            trainer.save_mesh()
 
+            # # Check if running in SageMaker
+            # if 'SM_MODEL_DIR' in os.environ:
             print("Saving all folders and files to to /opt/ml/.")
             # Copy the entire directory structure from self.ckpt_path to /opt/ml/model
             copy_directory(opt.workspace, '/opt/ml/model')

@@ -165,7 +165,7 @@ class Trainer(object):
                  device=None, # device to use, usually setting to None is OK. (auto choose device)
                  mute=False, # whether to mute all print
                  fp16=False, # amp optimize level
-                 eval_interval=1, # eval once every $ epoch
+                 eval_interval=10, # eval once every $ epoch
                  max_keep_ckpt=2, # max num of saved ckpts in disk
                  workspace='workspace', # workspace to save logs & ckpts
                  best_mode='min', # the smaller/larger result, the better
