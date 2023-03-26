@@ -13,8 +13,6 @@ print(f'[INFO] loading options..')
 parser = argparse.ArgumentParser()
 parser.add_argument('--text', default=None, help="text prompt")
 parser.add_argument('--negative', default='', type=str, help="negative text prompt")
-# parser.add_argument('-O', action='store_true', help="equals --fp16 --cuda_ray --dir_text")
-# parser.add_argument('-O2', action='store_true', help="equals --fp16 --dir_text")
 parser.add_argument('--test', action='store_true', help="test mode")
 parser.add_argument('--eval_interval', type=int, default=10, help="evaluate on the valid set every interval epochs")
 parser.add_argument('--workspace', type=str, default='trial_gradio')
@@ -44,7 +42,8 @@ parser.add_argument('--density_thresh', type=float, default=10, help="threshold 
 parser.add_argument('--blob_density', type=float, default=10, help="max (center) density for the density blob")
 parser.add_argument('--blob_radius', type=float, default=0.3, help="control the radius for the density blob")
 # network backbone
-parser.add_argument('--fp16', action='store_true', help="use amp mixed precision training")
+parser.add_argument('--fp16', action='store_true', help="use float16 for training")
+parser.add_argument('--vram_O', action='store_true', help="optimization for low VRAM usage")
 parser.add_argument('--backbone', type=str, default='grid', help="nerf backbone, choose from [grid, vanilla]")
 parser.add_argument('--optim', type=str, default='adan', choices=['adan', 'adam', 'adamw'], help="optimizer")
 parser.add_argument('--sd_version', type=str, default='2.1', choices=['1.5', '2.0', '2.1'], help="stable diffusion version")
@@ -82,12 +81,13 @@ parser.add_argument('--max_spp', type=int, default=1, help="GUI rendering max sa
 
 parser.add_argument('--need_share', type=bool, default=False, help="do you want to share gradio app to external network?")
 
-opt = parser.parse_args() 
+opt = parser.parse_args()
 
 # default to use -O !!!
 opt.fp16 = True
 opt.dir_text = True
 opt.cuda_ray = True
+opt.vram_O = True
 # opt.lambda_entropy = 1e-4
 # opt.lambda_opacity = 0
 
@@ -106,7 +106,7 @@ print(f'[INFO] loading models..')
 
 if opt.guidance == 'stable-diffusion':
     from sd import StableDiffusion
-    guidance = StableDiffusion(device, opt.sd_version, opt.hf_key)
+    guidance = StableDiffusion(device, opt.fp16, opt.vram_O, opt.sd_version, opt.hf_key)
 elif opt.guidance == 'clip':
     from nerf.clip import CLIP
     guidance = CLIP(device)
@@ -162,7 +162,7 @@ with gr.Blocks(css=".gradio-container {max-width: 512px; margin: auto;}") as dem
 
         # simply reload everything...
         model = NeRFNetwork(opt)
-        
+
         if opt.optim == 'adan':
             from optimizer import Adan
             # Adan usually requires a larger LR
@@ -188,7 +188,7 @@ with gr.Blocks(css=".gradio-container {max-width: 512px; margin: auto;}") as dem
         for epoch in range(max_epochs):
 
             trainer.train_gui(train_loader, step=STEPS)
-            
+
             # manual test and get intermediate results
             try:
                 data = next(loader)
@@ -219,7 +219,7 @@ with gr.Blocks(css=".gradio-container {max-width: 512px; margin: auto;}") as dem
                 video: gr.update(visible=False),
                 logs: f"training iters: {epoch * STEPS} / {iters}, lr: {trainer.optimizer.param_groups[0]['lr']:.6f}",
             }
-        
+
 
         # test
         trainer.test(test_loader)
@@ -227,18 +227,18 @@ with gr.Blocks(css=".gradio-container {max-width: 512px; margin: auto;}") as dem
         results = glob.glob(os.path.join(opt.workspace, 'results', '*rgb*.mp4'))
         assert results is not None, "cannot retrieve results!"
         results.sort(key=lambda x: os.path.getmtime(x)) # sort by mtime
-        
+
         end_t = time.time()
-        
+
         yield {
             image: gr.update(visible=False),
             video: gr.update(value=results[-1], visible=True),
             logs: f"Generation Finished in {(end_t - start_t)/ 60:.4f} minutes!",
         }
 
-    
+
     button.click(
-        submit, 
+        submit,
         [prompt, iters, seed],
         [image, video, logs]
     )
