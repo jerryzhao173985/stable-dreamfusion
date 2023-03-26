@@ -2,6 +2,7 @@ import torch
 import argparse
 import sys
 import json
+import shutil
 
 from nerf.provider import NeRFDataset
 from nerf.utils import *
@@ -113,9 +114,23 @@ def train(opt):
         
         else:
             valid_loader = NeRFDataset(opt, device=device, type='val', H=opt.H, W=opt.W, size=5).dataloader()
-
             max_epoch = np.ceil(opt.iters / len(train_loader)).astype(np.int32)
             trainer.train(train_loader, valid_loader, max_epoch)
+
+            # doing the testing just after training is done doing --test// --save_mesh
+            guidance = None # no need to load guidance model at test
+            trainer = Trainer(' '.join(sys.argv), 'df', opt, model, guidance, device=device, workspace=opt.workspace, fp16=opt.fp16, use_checkpoint=opt.ckpt)
+            test_loader = NeRFDataset(opt, device=device, type='test', H=opt.H, W=opt.W, size=100).dataloader()
+            trainer.test(test_loader)
+            # a special loader for poisson mesh reconstruction, 
+            # loader = NeRFDataset(opt, device=device, type='test', H=128, W=128, size=100).dataloader()
+            trainer.save_mesh()
+
+            # Check if running in SageMaker
+            if 'SM_MODEL_DIR' in os.environ:
+                # Copy the entire directory structure from self.ckpt_path to /opt/ml/model
+                shutil.copytree(opt.workspace, '/opt/ml/model')
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -163,8 +178,8 @@ def parse_args():
     parser.add_argument('--sd_version', type=str, default='2.1', choices=['1.5', '2.0', '2.1'], help="stable diffusion version")
     parser.add_argument('--hf_key', type=str, default=None, help="hugging face Stable diffusion model key")
     # rendering resolution in training, decrease this if CUDA OOM.
-    parser.add_argument('--w', type=int, default=64, help="render width for NeRF in training")
-    parser.add_argument('--h', type=int, default=64, help="render height for NeRF in training")
+    parser.add_argument('--w', type=int, default=128, help="render width for NeRF in training")
+    parser.add_argument('--h', type=int, default=128, help="render height for NeRF in training")
     
     ### dataset options
     parser.add_argument('--bound', type=float, default=1, help="assume the scene is bounded in box(-bound, bound)")
