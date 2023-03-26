@@ -11,6 +11,22 @@ from nerf.gui import NeRFGUI
 import boto3
 # from utils.general import get_config, load_params, get_params_path
 
+
+def copy_directory(src, dst):
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+
+    for item in os.listdir(src):
+        src_item = os.path.join(src, item)
+        dst_item = os.path.join(dst, item)
+
+        if os.path.isdir(src_item):
+            copy_directory(src_item, dst_item)
+        else:
+            shutil.copy2(src_item, dst_item)
+
+
+
 # torch.autograd.set_detect_anomaly(True)
 def train(opt):
     if opt.O:
@@ -130,7 +146,7 @@ def train(opt):
             if 'SM_MODEL_DIR' in os.environ:
                 print("Saving all folders and files to to /opt/ml/.")
                 # Copy the entire directory structure from self.ckpt_path to /opt/ml/model
-                shutil.copytree(opt.workspace, '/opt/ml/model')
+                copy_directory(opt.workspace, '/opt/ml/model')
 
 
 def parse_args():
