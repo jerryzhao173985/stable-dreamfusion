@@ -95,7 +95,7 @@ def train(opt):
         if opt.optim == 'adan':
             from optimizer import Adan
             # Adan usually requires a larger LR
-            optimizer = lambda model: Adan(model.get_params(5 * opt.lr), eps=1e-8, weight_decay=2e-5, max_grad_norm=5.0, foreach=False)
+            optimizer = lambda model: Adan(model.get_params(7.5 * opt.lr), eps=1e-8, weight_decay=2e-3, max_grad_norm=5.0, foreach=False)
         else: # adam
             optimizer = lambda model: torch.optim.Adam(model.get_params(opt.lr), betas=(0.9, 0.99), eps=1e-15)
 
@@ -106,8 +106,8 @@ def train(opt):
 
             scheduler = lambda optimizer: optim.lr_scheduler.LambdaLR(optimizer, warm_up_with_cosine_lr)
         else:
-            scheduler = lambda optimizer: optim.lr_scheduler.LambdaLR(optimizer, lambda iter: 1) # fixed
-            # scheduler = lambda optimizer: optim.lr_scheduler.LambdaLR(optimizer, lambda iter: 0.1 ** min(iter / opt.iters, 1))
+            # scheduler = lambda optimizer: optim.lr_scheduler.LambdaLR(optimizer, lambda iter: 1) # fixed
+            scheduler = lambda optimizer: optim.lr_scheduler.LambdaLR(optimizer, lambda iter: 0.1 ** min(iter / opt.iters, 1))
 
         if opt.guidance == 'stable-diffusion':
             from sd import StableDiffusion
@@ -145,6 +145,16 @@ def train(opt):
             print("Saving all folders and files to to /opt/ml/.")
             # Copy the entire directory structure from self.ckpt_path to /opt/ml/model
             copy_directory(opt.workspace, '/opt/ml/model')
+
+
+            # instead of zip everything together, expose some for demo purpose
+            local_ckpt_path = os.path.join(opt.workspace, f"mesh/mesh.obj")
+            s3_ckpt_path = f"stable-dreamfusion/results/{opt.workspace}/mesh.obj"
+            import boto3
+            # Initialize the S3 client
+            s3 = boto3.client('s3')
+            # Upload a file to the "folder"
+            s3.upload_file(local_ckpt_path, 'jerry-3d-object-generation', s3_ckpt_path)
 
 
 def parse_args():
