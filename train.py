@@ -142,11 +142,9 @@ def train(opt):
             # # loader = NeRFDataset(opt, device=device, type='test', H=128, W=128, size=100).dataloader()
             # trainer.save_mesh()
 
-            # Check if running in SageMaker
-            if 'SM_MODEL_DIR' in os.environ:
-                print("Saving all folders and files to to /opt/ml/.")
-                # Copy the entire directory structure from self.ckpt_path to /opt/ml/model
-                copy_directory(opt.workspace, '/opt/ml/model')
+            print("Saving all folders and files to to /opt/ml/.")
+            # Copy the entire directory structure from self.ckpt_path to /opt/ml/model
+            copy_directory(opt.workspace, '/opt/ml/model')
 
 
 def parse_args():
