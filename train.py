@@ -148,13 +148,22 @@ def train(opt):
 
 
             # instead of zip everything together, expose some for demo purpose
-            local_ckpt_path = os.path.join(opt.workspace, f"mesh/mesh.obj")
-            s3_ckpt_path = f"stable-dreamfusion/results/{opt.workspace}/mesh.obj"
             import boto3
-            # Initialize the S3 client
             s3 = boto3.client('s3')
-            # Upload a file to the "folder"
-            s3.upload_file(local_ckpt_path, 'jerry-3d-object-generation', s3_ckpt_path)
+            workspace = opt.workspace
+            s3_bucket = 'jerry-3d-object-generation'
+            s3_folder = f"stable-dreamfusion/results/{workspace}"
+            local_mesh_folder = os.path.join(workspace, "mesh")
+
+            files_to_upload = ['mesh.obj', 'mesh.mtl', 'albedo.png']
+
+            for file in files_to_upload:
+                s3.upload_file(
+                    os.path.join(local_mesh_folder, file),
+                    s3_bucket,
+                    f"{s3_folder}/{file}"
+                )
+
 
 
 def parse_args():
