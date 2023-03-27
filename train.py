@@ -95,7 +95,8 @@ def train(opt):
         if opt.optim == 'adan':
             from optimizer import Adan
             # Adan usually requires a larger LR
-            optimizer = lambda model: Adan(model.get_params(7.5 * opt.lr), eps=1e-8, weight_decay=2e-3, max_grad_norm=5.0, foreach=False)
+            optimizer = lambda model: Adan(model.get_params(10 * opt.lr), eps=1e-8, weight_decay=0.02, max_grad_norm=5.0, foreach=False)
+            # optimizer = lambda model: Adan(model.get_params(7.5 * opt.lr), eps=1e-8, weight_decay=2e-3, max_grad_norm=5.0, foreach=False)
         else: # adam
             optimizer = lambda model: torch.optim.Adam(model.get_params(opt.lr), betas=(0.9, 0.99), eps=1e-15)
 
