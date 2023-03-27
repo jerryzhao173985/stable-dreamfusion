@@ -920,20 +920,20 @@ class Trainer(object):
 
             self.stats["checkpoints"].append(file_path)
 
-            # if len(self.stats["checkpoints"]) > self.max_keep_ckpt:
-            #     old_ckpt = os.path.join(self.ckpt_path, self.stats["checkpoints"].pop(0))
-            #     if os.path.exists(old_ckpt):
-            #         os.remove(old_ckpt)
+            if len(self.stats["checkpoints"]) > self.max_keep_ckpt:
+                old_ckpt = os.path.join(self.ckpt_path, self.stats["checkpoints"].pop(0))
+                if os.path.exists(old_ckpt):
+                    os.remove(old_ckpt)
 
-            local_ckpt_path = os.path.join(self.ckpt_path, file_path)
-            torch.save(state, local_ckpt_path)
+            # local_ckpt_path = os.path.join(self.ckpt_path, file_path)
+            # torch.save(state, local_ckpt_path)
 
-            s3_ckpt_path = f"{self.ckpt_path}/{name}.pth"
-            import boto3
-            # Initialize the S3 client
-            s3 = boto3.client('s3')
-            # Upload a file to the "folder"
-            s3.upload_file(local_ckpt_path, 'jerry-3d-object-generation', s3_ckpt_path)
+            # s3_ckpt_path = f"{self.ckpt_path}/{name}.pth"
+            # import boto3
+            # # Initialize the S3 client
+            # s3 = boto3.client('s3')
+            # # Upload a file to the "folder"
+            # s3.upload_file(local_ckpt_path, 'jerry-3d-object-generation', s3_ckpt_path)
                         
 
         else:    

@@ -157,6 +157,8 @@ def train(opt):
             local_mesh_folder = os.path.join(workspace, "mesh")
 
             files_to_upload = ['mesh.obj', 'mesh.mtl', 'albedo.png']
+            if opt.albedo:
+                files_to_upload = ['mesh.obj']
 
             for file in files_to_upload:
                 s3.upload_file(
