@@ -212,7 +212,7 @@ class StableDiffusion(nn.Module):
 
         imgs = 2 * imgs - 1
 
-        posterior = self.vae.encode(imgs).latent_dist
+        posterior = self.vae.encode(imgs.half()).latent_dist
         latents = posterior.sample() * 0.18215
 
         return latents
