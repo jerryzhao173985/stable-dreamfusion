@@ -34,8 +34,9 @@ def train(opt):
 
     elif opt.O2:
         # only use fp16 if not evaluating normals (else lead to NaNs in training...)
-        if opt.albedo:
-            opt.fp16 = True
+        # if opt.albedo:
+        #     opt.fp16 = True
+        opt.fp16 = True
         opt.dir_text = True
         opt.backbone = 'vanilla'
 
