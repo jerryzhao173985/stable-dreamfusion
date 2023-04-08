@@ -11,6 +11,31 @@ from nerf.gui import NeRFGUI
 import boto3
 # from utils.general import get_config, load_params, get_params_path
 
+import os
+def upload_to_s3(local_folder, bucket_name, workspace):
+    s3 = boto3.client("s3")
+    
+    for root, dirs, files in os.walk(local_folder):
+        for file in files:
+            if file.endswith("_depth.mp4"):
+                s3_folder = "stable-dreamfusion/videos/depth/"
+                new_file_name = f"{workspace}_depth.mp4"
+            elif file.endswith("_rgb.mp4"):
+                s3_folder = "stable-dreamfusion/videos/rgb/"
+                new_file_name = f"{workspace}_rgb.mp4"
+            else:
+                continue
+
+            local_file = os.path.join(root, file)
+            s3_key = os.path.join(s3_folder, new_file_name)
+
+            try:
+                s3.upload_file(local_file, bucket_name, s3_key)
+                print(f"Uploaded {local_file} to s3://{bucket_name}/{s3_key}")
+            except Exception as e:
+                print(f"Error uploading {local_file} to S3: {e}")
+
+
 
 def copy_directory(src, dst):
     if not os.path.exists(dst):
@@ -150,7 +175,7 @@ def train(opt):
 
 
             # instead of zip everything together, expose some for demo purpose
-            import boto3
+            # import boto3
             s3 = boto3.client('s3')
             workspace = opt.workspace
             s3_bucket = 'jerry-3d-object-generation'
@@ -167,6 +192,11 @@ def train(opt):
                     s3_bucket,
                     f"{s3_folder}/{file}"
                 )
+            
+
+            local_videos_folder = os.path.join(workspace, "results")
+            bucket_name = "jerry-3d-object-generation"
+            upload_to_s3(local_videos_folder, bucket_name, workspace)
 
 
 
