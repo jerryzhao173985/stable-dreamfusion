@@ -11,6 +11,8 @@ from nerf.gui import NeRFGUI
 import boto3
 # from utils.general import get_config, load_params, get_params_path
 
+import re
+from datetime import datetime
 import os
 def upload_to_s3(local_folder, bucket_name, workspace):
     s3 = boto3.client("s3")
@@ -34,6 +36,37 @@ def upload_to_s3(local_folder, bucket_name, workspace):
                 print(f"Uploaded {local_file} to s3://{bucket_name}/{s3_key}")
             except Exception as e:
                 print(f"Error uploading {local_file} to S3: {e}")
+
+def append_attributes_to_file(file_path):
+    attributes = {}
+    with open(file_path, 'r') as file:
+        content = file.read()
+
+        attributes['workspace'] = re.search(r'Trainer: df \| .+ \| .+ \| .+ \| (.+)', content).group(1).replace('_', ' ')
+        attributes['iters'] = int(re.search(r'load at epoch \d+, global step (\d+)', content).group(1))
+        attributes['epochs'] = int(re.findall(r'Epoch (\d+)/\d+', content)[-1])
+        attributes['checkpoint'] = re.search(r'Latest checkpoint is (.+)', content).group(1).split('/')[-1]
+
+        start_time = re.search(r'\[INFO\] Trainer: df \| (.+?) \|', content).group(1)
+        attributes['start_time'] = datetime.strptime(start_time, '%Y-%m-%d_%H-%M-%S')
+
+        end_time = re.findall(r'\[INFO\] Trainer: df \| (.+?) \|', content)[-1]
+        attributes['end_time'] = datetime.strptime(end_time, '%Y-%m-%d_%H-%M-%S')
+        attributes['time'] = attributes['end_time'] - attributes['start_time']
+
+        attributes['duration'] = float(re.search(r'training takes (\d+.\d+) minutes', content).group(1))
+
+        start_lr = re.search(r'Start Training .+ Epoch 1/\d+, lr=(\d+\.\d+)', content).group(1)
+        attributes['start_lr'] = float(start_lr)
+        end_lr = re.search(r'Start Training .+ Epoch '+str(attributes['epochs'])+'/\d+, lr=(\d+\.\d+)', content).group(1)
+        attributes['end_lr'] = float(end_lr)
+
+    with open(file_path, 'a') as file:
+        file.write('\n\nAttributes from file:\n')
+        for key, value in attributes.items():
+            file.write(f"{key}: {value}\n")
+
+    return attributes
 
 
 
@@ -197,6 +230,28 @@ def train(opt):
             local_videos_folder = os.path.join(workspace, "results")
             bucket_name = "jerry-3d-object-generation"
             upload_to_s3(local_videos_folder, bucket_name, workspace)
+
+            attribute = append_attributes_to_file(os.path.join(workspace, 'log_df.txt'))
+            s3.upload_file(
+                    os.path.join(workspace, 'log_df.txt'),
+                    s3_bucket,
+                    f"stable-dreamfusion/logs/{workspace}.txt"
+                )
+            
+            # upload all the best images
+            image_string = attribute['checkpoint'].split('.')[0]
+            for root, dirs, files in os.walk(os.path.join(workspace, "validation")):
+                for file in files:
+                    if file.startswith(image_string):
+                        local_file = os.path.join(root, file)
+                        s3_key = f"stable-dreamfusion/images/rgb/{workspace}/{file}"
+                        if file.endswith("_depth.png"):
+                            s3_key = f"stable-dreamfusion/images/depth/{workspace}/{file}"
+                        try:
+                            s3.upload_file(local_file, bucket_name, s3_key)
+                            print(f"Uploaded {local_file} to s3://{bucket_name}/{s3_key}")
+                        except Exception as e:
+                            print(f"Error uploading {local_file} to S3: {e}")
 
 
 
